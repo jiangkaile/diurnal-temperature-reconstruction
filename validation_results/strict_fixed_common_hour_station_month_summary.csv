@@ -1,0 +1,2 @@
+eligible_station_months_ge24_common_hours,unique_stations,two_anchor_lower_rmse_percent,two_anchor_higher_r2_percent,median_rmse_improvement_c,rmse_improvement_q25_c,rmse_improvement_q75_c
+648057,10651,61.17069949093984,61.17069949093984,0.20310713138102732,-0.3353437260791934,0.7827796610296818

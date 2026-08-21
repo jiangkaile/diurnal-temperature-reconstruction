@@ -1,0 +1,12 @@
+{
+  "part_files": 14649,
+  "station_month_rows": 902924,
+  "duplicate_station_month_keys": 0,
+  "eligible_station_months_ge24_common_hours": 648057,
+  "unique_stations": 10651,
+  "two_anchor_lower_rmse_percent": 61.17069949093984,
+  "two_anchor_higher_r2_percent": 61.17069949093984,
+  "median_rmse_improvement_c": 0.20310713138102732,
+  "rmse_improvement_q25_c": -0.3353437260791934,
+  "rmse_improvement_q75_c": 0.7827796610296818
+}

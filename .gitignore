@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+outputs/
+data/noaa_hourly/
+*.nc
+*.nc4
+*.log
+Thumbs.db
+.DS_Store

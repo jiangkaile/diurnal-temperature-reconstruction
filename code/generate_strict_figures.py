@@ -1,0 +1,244 @@
+"""Generate final strict-validation Figures 8 and 9.
+
+Figure 10 is generated separately by generate_exact_common_figure.py because it
+uses the exact common held-out-hour station-month table.
+"""
+
+from __future__ import annotations
+
+import argparse
+from pathlib import Path
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
+
+BLUE = "#2F6B9A"
+ORANGE = "#D97732"
+GRID = "#D7DCE2"
+LABELS = {
+    "1pt_fixed12": "Fixed one-anchor (12 UTC)",
+    "2pt_fixed_00_12_clip": "Fixed two-anchor (00/12 UTC, clipped)",
+}
+
+
+def style_axes(ax):
+    ax.grid(True, color=GRID, linewidth=0.6, alpha=0.8)
+    ax.set_axisbelow(True)
+    ax.spines[["top", "right"]].set_visible(False)
+
+
+def station_maps(metrics: pd.DataFrame, features: pd.DataFrame, out: Path):
+    cols = [
+        "station",
+        "n_heldout_1pt_fixed12",
+        "rmse_heldout_1pt_fixed12",
+        "r2_heldout_1pt_fixed12",
+        "n_heldout_2pt_fixed_00_12_clip",
+        "rmse_heldout_2pt_fixed_00_12_clip",
+        "r2_heldout_2pt_fixed_00_12_clip",
+    ]
+    valid = metrics[cols].copy()
+    valid.loc[valid.n_heldout_1pt_fixed12 < 24,
+              ["rmse_heldout_1pt_fixed12", "r2_heldout_1pt_fixed12"]] = np.nan
+    valid.loc[valid.n_heldout_2pt_fixed_00_12_clip < 24,
+              ["rmse_heldout_2pt_fixed_00_12_clip", "r2_heldout_2pt_fixed_00_12_clip"]] = np.nan
+    st = valid.groupby("station", as_index=False).median(numeric_only=True)
+    ft = features[["station_id", "lon", "lat"]].copy()
+    ft["station_id"] = pd.to_numeric(ft["station_id"], errors="coerce")
+    st["station"] = pd.to_numeric(st["station"], errors="coerce")
+    st = st.merge(ft, left_on="station", right_on="station_id", how="left")
+
+    panels = [
+        ("rmse_heldout_1pt_fixed12", "a  Fixed one-anchor: station median RMSE", "viridis", 0.5, 5.5, "RMSE (°C)"),
+        ("rmse_heldout_2pt_fixed_00_12_clip", "b  Fixed two-anchor: station median RMSE", "viridis", 0.5, 5.5, "RMSE (°C)"),
+        ("r2_heldout_1pt_fixed12", "c  Fixed one-anchor: station median R²", "plasma_r", 0.0, 1.0, "R²"),
+        ("r2_heldout_2pt_fixed_00_12_clip", "d  Fixed two-anchor: station median R²", "plasma_r", 0.0, 1.0, "R²"),
+    ]
+    fig, axes = plt.subplots(2, 2, figsize=(12, 6.8), constrained_layout=True)
+    for ax, (col, title, cmap, vmin, vmax, cblabel) in zip(axes.ravel(), panels):
+        d = st[["lon", "lat", col]].dropna()
+        sc = ax.scatter(d.lon, d.lat, c=d[col], s=3.2, cmap=cmap, vmin=vmin, vmax=vmax,
+                        linewidths=0, rasterized=True)
+        ax.set_xlim(-180, 180)
+        ax.set_ylim(-60, 90)
+        ax.set_xticks([-180, -120, -60, 0, 60, 120, 180])
+        ax.set_yticks([-60, -30, 0, 30, 60, 90])
+        ax.set_xlabel("Longitude")
+        ax.set_ylabel("Latitude")
+        ax.set_title(title, loc="left", fontsize=10)
+        style_axes(ax)
+        cb = fig.colorbar(sc, ax=ax, fraction=0.025, pad=0.015)
+        cb.set_label(cblabel)
+    fig.suptitle("Spatial distribution of strict held-out station-level performance", fontsize=13)
+    fig.savefig(out, dpi=320, bbox_inches="tight")
+    plt.close(fig)
+
+
+def _two_mode(df):
+    return df[df["mode"].isin(LABELS)].copy()
+
+
+def stratified_figure(strat: Path, out: Path):
+    year = _two_mode(pd.read_csv(strat / "strict_anchor_by_year.csv"))
+    month = _two_mode(pd.read_csv(strat / "strict_anchor_by_month.csv"))
+    season = _two_mode(pd.read_csv(strat / "strict_anchor_by_season.csv"))
+    lat = _two_mode(pd.read_csv(strat / "strict_anchor_by_latitude_band.csv"))
+    koppen = _two_mode(pd.read_csv(strat / "strict_anchor_by_koppen.csv"))
+    elev = _two_mode(pd.read_csv(strat / "strict_anchor_by_elevdiff_group.csv"))
+
+    fig, axes = plt.subplots(2, 3, figsize=(13.2, 7.4), constrained_layout=True)
+    colors = {"1pt_fixed12": BLUE, "2pt_fixed_00_12_clip": ORANGE}
+
+    def line_panel(ax, df, x, title, xlabel):
+        for mode in LABELS:
+            d = df[df["mode"] == mode].sort_values(x)
+            ax.plot(d[x], d.rmse_pooled, marker="o", ms=4, lw=1.8,
+                    color=colors[mode], label=LABELS[mode])
+        ax.set_title(title, loc="left", fontsize=10)
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel("Pooled RMSE (°C)")
+        style_axes(ax)
+
+    line_panel(axes[0, 0], year, "year", "a  Year", "Year")
+    line_panel(axes[0, 1], month, "month", "b  Calendar month", "Month")
+
+    def category_panel(ax, df, col, title, order=None):
+        df = df[df[col].notna()].copy()
+        if order is None:
+            order = list(dict.fromkeys(df[col].astype(str)))
+            df[col] = df[col].astype(str)
+        y = np.arange(len(order))
+        h = 0.34
+        for off, mode in [(-h / 2, "1pt_fixed12"), (h / 2, "2pt_fixed_00_12_clip")]:
+            d = df[df["mode"] == mode].set_index(col).reindex(order)
+            ax.barh(y + off, d.rmse_pooled, height=h, color=colors[mode], label=LABELS[mode])
+        ax.set_yticks(y, order)
+        ax.invert_yaxis()
+        ax.set_xlabel("Pooled RMSE (°C)")
+        ax.set_title(title, loc="left", fontsize=10)
+        style_axes(ax)
+
+    category_panel(axes[0, 2], season, "season", "c  Season", ["DJF", "MAM", "JJA", "SON"])
+    category_panel(axes[1, 0], lat, "latitude_band", "d  Latitude band")
+    category_panel(axes[1, 1], koppen, "koppen", "e  Köppen climate group")
+    category_panel(axes[1, 2], elev, "elevdiff_group", "f  Elevation mismatch")
+
+    handles, labels = axes[0, 0].get_legend_handles_labels()
+    fig.legend(handles, labels, loc="upper center", ncol=2, frameon=False, bbox_to_anchor=(0.5, 1.035))
+    fig.suptitle("Strict held-out RMSE across temporal and geographic strata", fontsize=13, y=1.075)
+    fig.savefig(out, dpi=320, bbox_inches="tight")
+    plt.close(fig)
+
+
+def paired_figure(metrics: pd.DataFrame, out: Path, summary_out: Path):
+    cols = [
+        "station", "year", "month", "n_common_heldout",
+        "n_heldout_1pt_fixed12", "n_heldout_2pt_fixed_00_12_clip",
+        "rmse_heldout_1pt_fixed12", "r2_heldout_1pt_fixed12",
+        "rmse_heldout_2pt_fixed_00_12_clip", "r2_heldout_2pt_fixed_00_12_clip",
+    ]
+    d = metrics[cols].copy()
+    d = d[(d.n_heldout_1pt_fixed12 >= 24) & (d.n_heldout_2pt_fixed_00_12_clip >= 24)]
+    d = d.dropna(subset=cols[6:]).copy()
+    r1 = d.rmse_heldout_1pt_fixed12.to_numpy()
+    r2 = d.rmse_heldout_2pt_fixed_00_12_clip.to_numpy()
+    q1 = d.r2_heldout_1pt_fixed12.to_numpy()
+    q2 = d.r2_heldout_2pt_fixed_00_12_clip.to_numpy()
+
+    summary = pd.DataFrame([{
+        "paired_station_months": len(d),
+        "paired_with_at_least_24_common_heldout_hours": int((d.n_common_heldout >= 24).sum()),
+        "two_anchor_lower_rmse_percent": 100 * float(np.mean(r2 < r1)),
+        "two_anchor_higher_r2_percent": 100 * float(np.mean(q2 > q1)),
+        "median_rmse_improvement_c": float(np.median(r1 - r2)),
+        "rmse_improvement_q25_c": float(np.quantile(r1 - r2, 0.25)),
+        "rmse_improvement_q75_c": float(np.quantile(r1 - r2, 0.75)),
+    }])
+    summary.to_csv(summary_out, index=False)
+
+    fig, axes = plt.subplots(2, 2, figsize=(10.2, 8.2), constrained_layout=True)
+    rmse_lim = float(max(4.0, np.quantile(np.r_[r1, r2], 0.995)))
+    hb = axes[0, 0].hexbin(r1, r2, gridsize=85, mincnt=1, bins="log", cmap="magma",
+                           extent=(0, rmse_lim, 0, rmse_lim))
+    axes[0, 0].plot([0, rmse_lim], [0, rmse_lim], color="white", lw=1.1, ls="--")
+    axes[0, 0].set(xlim=(0, rmse_lim), ylim=(0, rmse_lim),
+                   xlabel="One-anchor RMSE (°C)", ylabel="Two-anchor RMSE (°C)")
+    axes[0, 0].set_title("a  Paired station-month RMSE", loc="left", fontsize=10)
+    fig.colorbar(hb, ax=axes[0, 0], label="log10 count")
+
+    r2_lo = -0.5
+    q1p = np.clip(q1, r2_lo, 1)
+    q2p = np.clip(q2, r2_lo, 1)
+    hb2 = axes[0, 1].hexbin(q1p, q2p, gridsize=85, mincnt=1, bins="log", cmap="magma",
+                            extent=(r2_lo, 1, r2_lo, 1))
+    axes[0, 1].plot([r2_lo, 1], [r2_lo, 1], color="white", lw=1.1, ls="--")
+    axes[0, 1].set(xlim=(r2_lo, 1), ylim=(r2_lo, 1), xlabel="One-anchor R²", ylabel="Two-anchor R²")
+    axes[0, 1].set_title("b  Paired station-month R² (values < −0.5 clipped)", loc="left", fontsize=10)
+    fig.colorbar(hb2, ax=axes[0, 1], label="log10 count")
+
+    def ecdf(a):
+        x = np.sort(a[np.isfinite(a)])
+        return x, np.arange(1, len(x) + 1) / len(x)
+
+    for arr, color, label in [(r1, BLUE, LABELS["1pt_fixed12"]), (r2, ORANGE, LABELS["2pt_fixed_00_12_clip"])]:
+        x, y = ecdf(arr)
+        axes[1, 0].plot(x, y, color=color, lw=1.8, label=label)
+    axes[1, 0].set_xlim(0, rmse_lim)
+    axes[1, 0].set(xlabel="Station-month RMSE (°C)", ylabel="Cumulative probability")
+    axes[1, 0].set_title("c  RMSE empirical CDF", loc="left", fontsize=10)
+
+    for arr, color, label in [(q1, BLUE, LABELS["1pt_fixed12"]), (q2, ORANGE, LABELS["2pt_fixed_00_12_clip"])]:
+        x, y = ecdf(arr)
+        axes[1, 1].plot(x, y, color=color, lw=1.8, label=label)
+    axes[1, 1].set_xlim(r2_lo, 1)
+    axes[1, 1].set(xlabel="Station-month R²", ylabel="Cumulative probability")
+    axes[1, 1].set_title("d  R² empirical CDF (display range ≥ −0.5)", loc="left", fontsize=10)
+
+    for ax in axes.ravel():
+        style_axes(ax)
+    axes[1, 0].legend(frameon=False, fontsize=8)
+    axes[1, 1].legend(frameon=False, fontsize=8)
+    fig.suptitle(
+        f"Paired station-month comparison (N = {len(d):,}; each method uses its own held-out hours)",
+        fontsize=13,
+    )
+    fig.savefig(out, dpi=320, bbox_inches="tight")
+    plt.close(fig)
+
+
+def main():
+    package_root = Path(__file__).resolve().parents[1]
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--metrics",
+        type=Path,
+        default=package_root / "outputs" / "strict_anchor" / "strict_anchor_station_month_metrics.csv.gz",
+    )
+    parser.add_argument(
+        "--features",
+        type=Path,
+        default=package_root / "data" / "station_grid_features.csv",
+    )
+    parser.add_argument(
+        "--stratified-dir",
+        type=Path,
+        default=package_root / "outputs" / "strict_anchor" / "stratified",
+    )
+    parser.add_argument("--output-dir", type=Path, default=package_root / "figures")
+    args = parser.parse_args()
+
+    for required in (args.metrics, args.features, args.stratified_dir):
+        if not required.exists():
+            raise FileNotFoundError(f"Required input does not exist: {required}")
+    args.output_dir.mkdir(parents=True, exist_ok=True)
+    metrics = pd.read_csv(args.metrics)
+    features = pd.read_csv(args.features)
+    station_maps(metrics, features, args.output_dir / "Figure8_strict_spatial_performance.png")
+    stratified_figure(args.stratified_dir, args.output_dir / "Figure9_strict_stratified_performance.png")
+    print("Created Figures 8 and 9 in", args.output_dir)
+
+
+if __name__ == "__main__":
+    main()

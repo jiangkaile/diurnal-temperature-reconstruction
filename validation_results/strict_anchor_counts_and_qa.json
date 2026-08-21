@@ -1,0 +1,43 @@
+{
+  "algorithm": "strict-anchor-v1-anchor-only-alpha-abs-delta",
+  "station_parts": 14649,
+  "unique_stations": 14649,
+  "unique_station_months": 902924,
+  "duplicate_station_months": 0,
+  "diagnostics": {
+    "anchor_days": 18614693,
+    "fit_days_delta_0.5": 17518854,
+    "fallback_days_delta_0.5": 1095839,
+    "beta_negative": 1911840,
+    "beta_below_0.1": 2423924,
+    "beta_above_5": 266399
+  },
+  "valid_station_months_ge24": {
+    "all": {
+      "1pt_fixed12": 706208,
+      "2pt_fixed_00_12_literal": 652558,
+      "2pt_fixed_00_12_clip": 652558,
+      "2pt_dynamic_strict": 741029
+    },
+    "heldout": {
+      "1pt_fixed12": 699545,
+      "2pt_fixed_00_12_literal": 648068,
+      "2pt_fixed_00_12_clip": 648068,
+      "2pt_dynamic_strict": 718119
+    }
+  },
+  "valid_stations_ge1month": {
+    "all": {
+      "1pt_fixed12": 11544,
+      "2pt_fixed_00_12_literal": 10729,
+      "2pt_fixed_00_12_clip": 10729,
+      "2pt_dynamic_strict": 11921
+    },
+    "heldout": {
+      "1pt_fixed12": 11437,
+      "2pt_fixed_00_12_literal": 10651,
+      "2pt_fixed_00_12_clip": 10651,
+      "2pt_dynamic_strict": 11414
+    }
+  }
+}

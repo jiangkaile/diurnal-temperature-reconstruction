@@ -1,0 +1,8 @@
+{
+  "eligible_station_months": 648057,
+  "unique_stations": 10651,
+  "delta_rmse_positive_percent": 61.17069949093984,
+  "delta_rmse_median_c": 0.20310713138102732,
+  "delta_rmse_q25_c": -0.3353437260791934,
+  "delta_rmse_q75_c": 0.7827796610296818
+}
