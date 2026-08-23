@@ -34,7 +34,7 @@ VALID_QC = {"1", "5", "C", "I", "M", "P", "R", "U"}
 USECOLS = ["STATION", "DATE", "LATITUDE", "LONGITUDE", "TMP"]
 
 _SHAPES = None
-_TF = None  # worker 全局（spawn 子进程由 _init_pool 注入）
+_TF = None  # Worker-local instance, initialised by _init_pool under spawn.
 
 
 def _init_pool(shapes_path, output_dir, parts_dir):
@@ -308,7 +308,7 @@ def aggregate():
             mode, yy, mm = k.split("|")
             sm_rows.append((d["station"], mode, int(yy), int(mm),
                             a["n"], a["sse"], a["sy"], a["sy2"]))
-        # 站级（2pt_local 主口径）用于地图
+        # Retain station-level metrics for the primary local two-point map.
         a2 = d["acc"].get("2pt_local00_12")
         if a2 and a2["n"] >= 24:
             station_rows.append((d["station"], d["lat"], d["lon"],
@@ -316,13 +316,13 @@ def aggregate():
         if i % 20000 == 0:
             print(f"  {i}/{len(files)}", flush=True)
 
-    # ---- 六模式汇总 ----
+    # Summarise the six reconstruction schemes.
     rows = []
     for m in modes_all:
         rmse, r2, n = combine(per_mode[m])
         rows.append({"mode": m, "n_heldout": n, "rmse": rmse, "r2": r2})
     summ = pd.DataFrame(rows)
-    summ.to_csv(OUT / "six_mode_civil_time_summary.csv", index=False, encoding="utf-8-sig")
+    summ.to_csv(OUT / "six_mode_civil_time_summary.csv", index=False, encoding="utf-8")
 
     # Station-month metrics.
     sm = pd.DataFrame(sm_rows, columns=["station", "mode", "year", "month",
@@ -331,7 +331,7 @@ def aggregate():
     sst = g.sy2 - g.sy ** 2 / g.n
     g["r2"] = np.where(sst > 0, 1 - g.sse / sst, np.nan)
     g["rmse"] = np.sqrt(g.sse / g.n)
-    g.to_csv(OUT / "six_mode_station_month_metrics.csv", index=False, encoding="utf-8-sig")
+    g.to_csv(OUT / "six_mode_station_month_metrics.csv", index=False, encoding="utf-8")
 
     # Station-month summaries at three held-out-hour thresholds.
     th_rows = []
@@ -344,7 +344,7 @@ def aggregate():
                                 "share_r2_lt_0": float((sub < 0).mean()),
                                 "share_r2_lt_02": float((sub < 0.2).mean())})
     pd.DataFrame(th_rows).to_csv(OUT / "six_mode_station_month_r2_thresholds.csv",
-                                 index=False, encoding="utf-8-sig")
+                                 index=False, encoding="utf-8")
 
     # Station-level map data.
     st = pd.DataFrame(station_rows, columns=["station", "lat", "lon", "n", "sse", "sy", "sy2"])
@@ -352,7 +352,7 @@ def aggregate():
         sst = st.sy2 - st.sy ** 2 / st.n
         st["rmse"] = np.sqrt(st.sse / st.n)
         st["r2"] = np.where(sst > 0, 1 - st.sse / sst, np.nan)
-        st.to_csv(OUT / "six_mode_station_map_data.csv", index=False, encoding="utf-8-sig")
+        st.to_csv(OUT / "six_mode_station_map_data.csv", index=False, encoding="utf-8")
 
     # Time-zone and safeguard QA.
     qa_out = {

@@ -2,15 +2,15 @@
 ERA5-Land diurnal cycle parameter fitting
 ================================================================================
 Output directory: ./output/
-  ├─ diurnal_cycle_params_final.nc       (final parameter file)
-  ├─ logs/                                (log folder)
-  ├─ checkpoints/                          (checkpoint folder)
-  │   ├─ clim_month_01.nc ... 12.nc
-  │   ├─ climatology.nc
-  │   ├─ valid_mask.nc                    (valid-data mask)
-  │   └─ fitted_complete.nc
-  └─ statistics/                           (statistics folder)
-      └─ mask_analysis.txt
+  diurnal_cycle_params_final.nc           (final parameter file)
+  logs/                                    (log folder)
+  checkpoints/                             (checkpoint folder)
+    clim_month_01.nc ... 12.nc
+    climatology.nc
+    valid_mask.nc                          (valid-data mask)
+    fitted_complete.nc
+  statistics/                              (statistics folder)
+    mask_analysis.txt
 
 Date: 2025-10-17 (revised 2026-03-04)
 ================================================================================
@@ -936,31 +936,31 @@ def print_checkpoint_status():
     logging.info("Checkpoint status:")
     if CHECKPOINT_CLIM.exists():
         size = CHECKPOINT_CLIM.stat().st_size / (1024**2)
-        logging.info(f"  ✅ Climatology: {CHECKPOINT_CLIM.name} ({size:.1f} MB)")
+        logging.info(f"  [complete] Climatology: {CHECKPOINT_CLIM.name} ({size:.1f} MB)")
     else:
         month_files = sorted(CHECKPOINT_DIR.glob("clim_month_*.nc"))
         if month_files:
-            logging.info(f"  ⏳ Partial months: {len(month_files)}/12 completed")
+            logging.info(f"  [in progress] Partial months: {len(month_files)}/12 completed")
         else:
-            logging.info("  ❌ Not started")
+            logging.info("  [not started] Climatology")
 
     if CHECKPOINT_MASK.exists():
         size = CHECKPOINT_MASK.stat().st_size / (1024**2)
-        logging.info(f"  ✅ Valid‑data mask: {CHECKPOINT_MASK.name} ({size:.1f} MB)")
+        logging.info(f"  [complete] Valid-data mask: {CHECKPOINT_MASK.name} ({size:.1f} MB)")
     else:
-        logging.info("  ❌ Not generated")
+        logging.info("  [not generated] Valid-data mask")
 
     if CHECKPOINT_FIT.exists():
         size = CHECKPOINT_FIT.stat().st_size / (1024**2)
-        logging.info(f"  ✅ Fitted parameters: {CHECKPOINT_FIT.name} ({size:.1f} MB)")
+        logging.info(f"  [complete] Fitted parameters: {CHECKPOINT_FIT.name} ({size:.1f} MB)")
     else:
-        logging.info("  ❌ Not started")
+        logging.info("  [not started] Fitted parameters")
 
     if OUTPUT_PARAMS_FILE.exists():
         size = OUTPUT_PARAMS_FILE.stat().st_size / (1024**2)
-        logging.info(f"  ✅ Final file: {OUTPUT_PARAMS_FILE.name} ({size:.1f} MB)")
+        logging.info(f"  [complete] Final file: {OUTPUT_PARAMS_FILE.name} ({size:.1f} MB)")
     else:
-        logging.info("  ❌ Not generated")
+        logging.info("  [not generated] Final file")
 
     logging.info("")
 
