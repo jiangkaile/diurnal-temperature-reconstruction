@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Optional exact common-hour station-month aggregation for the two fixed modes.
 
-This is not required for the current Figure 10 because that caption explicitly states
+This diagnostic is retained for the exact-common comparison because its caption states
 that each mode's station-month metric uses its own held-out hours and the manuscript
 also reports exact common-hour pooled metrics. Run this only if the journal/editor asks
 for station-month RMSE/R2 computed from an identical hourly mask.

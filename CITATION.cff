@@ -6,8 +6,8 @@ authors:
   - family-names: "Jiang"
     given-names: "Kaile"
     affiliation: "Nanjing University"
-version: 3.0.1
-date-released: 2026-08-22
+version: 3.0.2
+date-released: 2026-08-23
 doi: 10.5281/zenodo.18859817
 repository-code: "https://github.com/jiangkaile/diurnal-temperature-reconstruction"
 license: CC-BY-4.0

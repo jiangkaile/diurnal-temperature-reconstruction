@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate the final two-panel Figure 10 from exact common held-out hours."""
+"""Generate the archived paired exact-common diagnostic comparison."""
 
 from __future__ import annotations
 

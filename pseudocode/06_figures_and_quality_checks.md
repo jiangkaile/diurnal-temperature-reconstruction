@@ -1,13 +1,17 @@
 # Pseudocode 06: figures and quality checks
 
-## Spatial performance figure
+## Six-scheme spatial RMSE figure
 
 ```text
-FILTER station-months with at least 24 mode-specific held-out hours
-AGGREGATE each station to median RMSE and median R2
+FOR UTC and date-specific civil-time one- and two-point schemes
+FILTER station-months with at least 240 mode-specific held-out hours
+AGGREGATE each station to median RMSE
 JOIN latitude and longitude
-PLOT one-anchor and fixed two-anchor RMSE and R2 on common colour scales
+PLOT the six station-level RMSE maps on one 0-to-common-maximum colour scale
+RETAIN values above the display maximum and assign the top colour
 REPORT station counts in the caption
+REPORT exact-common pooled R2 for every scheme in the main table
+DO NOT select or exclude stations according to R2
 ```
 
 ## Stratified performance figure
@@ -20,14 +24,11 @@ USE consistent colours and units for the two fixed modes
 STATE that each stratum uses its documented evaluation scope
 ```
 
-## Exact paired station-month figure
+## Exact paired station-month diagnostic
 
 ```text
 FILTER exact common-hour station-months to N >= 24
-PLOT hexbin comparison of one-anchor and two-anchor RMSE
-PLOT hexbin comparison of one-anchor and two-anchor R2
-ADD equality lines
-PLOT empirical cumulative distributions for RMSE and R2
+PLOT the paired RMSE difference distribution and the RMSE empirical CDF
 STATE that both methods use identical observations in every station-month
 ```
 
@@ -45,4 +46,3 @@ CHECK common-hour comparisons use an identical mask
 CHECK figures, captions, manuscript values, and response values agree
 CHECK all public files against SHA-256 checksums
 ```
-

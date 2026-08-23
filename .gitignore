@@ -12,3 +12,4 @@ data/noaa_hourly/
 *.log
 Thumbs.db
 .DS_Store
+_qa_v302/
