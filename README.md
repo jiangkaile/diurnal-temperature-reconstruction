@@ -2,7 +2,7 @@
 
 ## Scope
 
-This repository accompanies the global monthly diurnal temperature-cycle parameter dataset. Version 3.0.2 provides the executable Python source used for archive generation, NOAA validation, UTC/civil-time sensitivity analysis, and figure generation. Inputs and outputs are configured by command-line arguments, environment variables, or package-relative defaults; the numerical algorithms, thresholds, masks, and aggregation rules match the archived workflows. The implementation-neutral pseudocode remains as a concise specification.
+This repository accompanies the global monthly diurnal temperature-cycle parameter dataset. Version 3.0.3 provides the executable Python source used for archive generation, NOAA validation, UTC/civil-time sensitivity analysis, and figure generation. Inputs and outputs are configured by command-line arguments, environment variables, or package-relative defaults; the numerical algorithms, thresholds, masks, and aggregation rules match the archived workflows. The implementation-neutral pseudocode remains as a concise specification.
 
 ERA5-Land and NOAA Integrated Surface Database source observations are not redistributed. They remain available from their official repositories.
 
@@ -27,7 +27,7 @@ ERA5-Land and NOAA Integrated Surface Database source observations are not redis
 - `code/six_mode_civil_time_validation.py`: six-scheme UTC and date-specific IANA civil-time held-out validation, including daylight-saving-time handling and exact-common scoring.
 - `code/strict_anchor_stratification.py`: temporal and geographic stratification summaries.
 - `code/generate_strict_figures.py`: final Figure 8 and Figure 9 workflows.
-- `code/generate_six_mode_rmse_figure.py`: main-text Figure 10 workflow using station-level RMSE only; pooled R-squared values remain in the accompanying table.
+- `code/generate_six_mode_rmse_figure.py`: main-text Figure 10 workflow showing four representative UTC/civil-time station-level RMSE maps; pooled RMSE and R-squared values for all six evaluated schemes remain in the accompanying table.
 - `code/generate_exact_common_comparison.py`: archived paired exact-common diagnostic comparison.
 - `tests/smoke_test.py`: deterministic synthetic execution test requiring no external data.
 - `data/station_meta_sixmode.csv` and `data/shapes_cache_sixmode.npz`: validation metadata and the parameter-derived harmonic shape cache used by the final scripts.
@@ -79,14 +79,15 @@ python code/generate_strict_figures.py --metrics outputs/strict_anchor/strict_an
 python code/generate_six_mode_rmse_figure.py --output-dir figures
 ```
 
-The final Figure 10 can be reproduced directly from the included lightweight
-station-level map table. To rebuild that table from the complete intermediate
-station-month output, also provide `--station-month-metrics` and
-`--coordinates`.
+The final four-panel Figure 10 can be reproduced directly from the included
+lightweight station-level map table. It shows matched UTC/civil-time comparisons
+for the 12:00 one-point anchor and the 00:00/12:00 two-point anchors. To rebuild
+the map table from the complete intermediate station-month output, also provide
+`--station-month-metrics` and `--coordinates`.
 
 ## Principal validation checks
 
-The included final summaries report 14,649 unique stations in strict validation. Fixed 12 UTC one-anchor reconstruction achieved held-out RMSE 3.0459 degrees C and R-squared 0.9389. Clipped fixed 00/12 UTC two-anchor reconstruction achieved held-out RMSE 2.9763 degrees C and R-squared 0.9413 on its mode-specific held-out sample. In the six-scheme exact-common comparison (242,199,270 held-out hours), the civil-time 00/12 two-point scheme performed best, with RMSE 2.743 degrees C and R-squared 0.947, compared with RMSE 2.896 degrees C and R-squared 0.941 for UTC 00/12. Figure 10 maps RMSE; Table 1 reports all six pooled R-squared values, and no station is selected or excluded according to R-squared.
+The included final summaries report 14,649 unique stations in strict validation. Fixed 12 UTC one-anchor reconstruction achieved held-out RMSE 3.0459 degrees C and R-squared 0.9389. Clipped fixed 00/12 UTC two-anchor reconstruction achieved held-out RMSE 2.9763 degrees C and R-squared 0.9413 on its mode-specific held-out sample. In the six-scheme exact-common comparison (242,199,270 held-out hours), the civil-time 00/12 two-point scheme performed best, with RMSE 2.743 degrees C and R-squared 0.947, compared with RMSE 2.896 degrees C and R-squared 0.941 for UTC 00/12. Figure 10 maps station-level RMSE for four representative matched UTC/civil-time schemes; Table 1 reports pooled RMSE and R-squared for all six evaluated schemes, and no station is selected or excluded according to R-squared.
 
 ## Reproducibility notes
 
@@ -98,11 +99,12 @@ The included final summaries report 14,649 unique stations in strict validation.
 - The two-anchor safeguard is `abs(S[h2] - S[h1]) <= 0.5 degrees C`; the scale factor is clipped to `[0.1, 5.0]`.
 - Every reported table states its denominator; exact common-hour comparisons use an identical held-out mask.
 
-## Version 3.0.2
+## Version 3.0.3
 
-This release adds the complete six-scheme UTC/civil-time validation workflow,
-the final main-text Figure 10 generator and map table, the associated pooled
-summary and time-zone QA, and package-relative/command-line path handling.
+This release updates the main-text Figure 10 workflow to a clearer four-panel
+comparison of matched UTC/civil-time one-point and two-point anchors. It removes
+the figure-wide title, places the shared RMSE colour scale below the maps, and
+retains the complete six-scheme pooled comparison in the accompanying table.
 
 ## Citation and license
 

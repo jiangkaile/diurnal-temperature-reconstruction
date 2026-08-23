@@ -1,9 +1,13 @@
-"""Generate the main-text six-scheme station-level RMSE map (Figure 10).
+"""Generate four representative station-level RMSE maps for Figure 10.
 
 By default the script uses the lightweight station-level map table included in
 ``validation_results``. A fresh map table can instead be derived from the full
 station-month output of ``six_mode_civil_time_validation.py`` by passing
 ``--station-month-metrics`` and ``--coordinates``.
+
+The figure shows matched UTC/civil-time comparisons for the 12:00 one-point
+anchor and the 00:00/12:00 two-point anchors. Results for all six evaluated
+schemes remain available in the accompanying summary table.
 """
 
 from __future__ import annotations
@@ -23,19 +27,21 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_MAP = ROOT / "validation_results" / "six_mode_station_rmse_map_n240.csv"
 DEFAULT_OUTPUT = ROOT / "figures"
 
-MODES = [
+ALL_MODES = [
     "1pt_utc00", "1pt_utc12", "1pt_local00", "1pt_local12",
     "2pt_utc00_12", "2pt_local00_12",
 ]
+PLOTTED_MODES = [
+    "1pt_utc12", "1pt_local12",
+    "2pt_utc00_12", "2pt_local00_12",
+]
 LABELS = {
-    "1pt_utc00": "1-point UTC 00",
-    "1pt_utc12": "1-point UTC 12",
-    "1pt_local00": "1-point civil time 00",
-    "1pt_local12": "1-point civil time 12",
-    "2pt_utc00_12": "2-point UTC 00/12",
-    "2pt_local00_12": "2-point civil time 00/12",
+    "1pt_utc12": "1-point UTC (12:00)",
+    "1pt_local12": "1-point civil time (12:00)",
+    "2pt_utc00_12": "2-point UTC (00:00/12:00)",
+    "2pt_local00_12": "2-point civil time (00:00/12:00)",
 }
-PANEL_LABELS = ["a", "b", "c", "d", "e", "f"]
+PANEL_LABELS = ["a", "b", "c", "d"]
 
 
 def parse_args() -> argparse.Namespace:
@@ -60,7 +66,7 @@ def build_map_data(metrics_path: Path, coordinates_path: Path,
         chunksize=250_000,
     ):
         chunk = chunk[
-            chunk["mode"].astype(str).isin(MODES)
+            chunk["mode"].astype(str).isin(ALL_MODES)
             & (chunk["n"] >= minimum_hours)
             & np.isfinite(chunk["rmse"])
         ].copy()
@@ -99,7 +105,7 @@ def plot(station: pd.DataFrame, output_dir: Path, minimum_hours: int) -> None:
         "font.family": "Arial", "font.size": 10.5,
         "axes.titlesize": 11.5, "axes.labelsize": 10.5,
     })
-    fig, axes = plt.subplots(2, 3, figsize=(15.8, 8.9), sharex=True, sharey=True)
+    fig, axes = plt.subplots(2, 2, figsize=(12.2, 8.0), sharex=True, sharey=True)
     scatter = None
     stats = {
         "minimum_heldout_hours_per_station_month": minimum_hours,
@@ -108,7 +114,7 @@ def plot(station: pd.DataFrame, output_dir: Path, minimum_hours: int) -> None:
         "global_p99_c": p99,
         "modes": {},
     }
-    for panel, mode, ax in zip(PANEL_LABELS, MODES, axes.flat):
+    for panel, mode, ax in zip(PANEL_LABELS, PLOTTED_MODES, axes.flat):
         values = station[
             (station["mode"] == mode)
             & station["lat"].notna() & station["lon"].notna()
@@ -134,19 +140,12 @@ def plot(station: pd.DataFrame, output_dir: Path, minimum_hours: int) -> None:
         ax.set_ylabel("Latitude")
     for ax in axes[1, :]:
         ax.set_xlabel("Longitude")
-    fig.suptitle("Figure 10 | Station-level held-out RMSE across six anchor schemes",
-                 fontsize=15, fontweight="bold", y=0.985)
-    fig.text(
-        0.5, 0.952,
-        f"Station medians across station-months with at least {minimum_hours} "
-        "held-out hourly observations",
-        ha="center", va="top", fontsize=10.5, color="#444444",
-    )
-    cbar = fig.colorbar(scatter, ax=axes.ravel().tolist(), fraction=0.025,
-                        pad=0.035, extend="max")
-    cbar.set_label("Station-median RMSE (°C); values above the colour limit use the top colour")
-    fig.subplots_adjust(left=0.055, right=0.885, bottom=0.075, top=0.90,
-                        wspace=0.18, hspace=0.22)
+    fig.subplots_adjust(left=0.065, right=0.985, bottom=0.155, top=0.965,
+                        wspace=0.12, hspace=0.20)
+    colourbar_axis = fig.add_axes([0.20, 0.065, 0.60, 0.025])
+    cbar = fig.colorbar(scatter, cax=colourbar_axis, orientation="horizontal",
+                        extend="max")
+    cbar.set_label("Station-median RMSE (°C)", labelpad=5)
     stem = output_dir / "Figure10_six_mode_station_RMSE"
     fig.savefig(stem.with_suffix(".png"), dpi=320, facecolor="white")
     fig.savefig(stem.with_suffix(".pdf"), dpi=320, facecolor="white")

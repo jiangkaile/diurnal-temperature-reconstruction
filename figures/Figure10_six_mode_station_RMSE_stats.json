@@ -1,0 +1,32 @@
+{
+  "minimum_heldout_hours_per_station_month": 240,
+  "colour_scale_min_c": 0.0,
+  "colour_scale_max_c": 5.5,
+  "global_p99_c": 5.005052193184796,
+  "modes": {
+    "1pt_utc12": {
+      "stations": 7302,
+      "median_station_rmse_c": 2.8530289870881615,
+      "p99_station_rmse_c": 4.690177793346394,
+      "max_station_rmse_c": 9.170445981731207
+    },
+    "1pt_local12": {
+      "stations": 7289,
+      "median_station_rmse_c": 2.855948923042343,
+      "p99_station_rmse_c": 4.815561007417808,
+      "max_station_rmse_c": 6.657809431390554
+    },
+    "2pt_utc00_12": {
+      "stations": 6968,
+      "median_station_rmse_c": 2.3978393690316766,
+      "p99_station_rmse_c": 5.554642911045521,
+      "max_station_rmse_c": 10.153218258718317
+    },
+    "2pt_local00_12": {
+      "stations": 6768,
+      "median_station_rmse_c": 2.308147151508397,
+      "p99_station_rmse_c": 4.77118699168882,
+      "max_station_rmse_c": 10.695712173972888
+    }
+  }
+}
